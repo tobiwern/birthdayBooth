@@ -162,6 +162,7 @@ void setup() {
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);
+  WiFi.hostname("Birthday-Booth");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Connecting to WiFi...");
