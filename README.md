@@ -1,1 +1,1 @@
-# fotoBooth
+# photoBooth
