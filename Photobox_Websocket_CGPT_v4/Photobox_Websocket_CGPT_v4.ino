@@ -8,10 +8,11 @@
 #include "soc/soc.h"           // Disable brownour problems
 #include "soc/rtc_cntl_reg.h"  // Disable brownour problems
 #include "driver/rtc_io.h"
+#include "credentials.h"
 
 // Change the following settings according to your network
-const char* ssid = "FRITZ!Box 7490";
-const char* password = "79739197982501102402";
+const char* ssid = mySSID;
+const char* password = myPASSWORD;
 
 // Pin definition for the camera module
 #define CAMERA_MODEL_AI_THINKER
