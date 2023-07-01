@@ -13,6 +13,7 @@
 // Change the following settings according to your network
 const char* ssid = mySSID;
 const char* password = myPASSWORD;
+String hostname = "birthday-booth";
 
 // Pin definition for the camera module
 #define CAMERA_MODEL_AI_THINKER
@@ -160,9 +161,9 @@ void setup() {
   Serial.begin(115200);
 
   // Connect to Wi-Fi
+  WiFi.hostname(hostname.c_str());
   WiFi.begin(ssid, password);
-  WiFi.setSleep(false);
-  WiFi.hostname("Birthday-Booth");
+  WiFi.setSleep(false);  
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Connecting to WiFi...");
