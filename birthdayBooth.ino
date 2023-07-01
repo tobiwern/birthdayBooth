@@ -11,6 +11,12 @@
 const char* ssid = "BirthdayBooth" ;//mySSID;
 const char* password = "BirthdayBooth"; //myPASSWORD;
 String hostname = "birthday-booth";
+const int channel = 6;
+//const bool  hide_SSID = false; 
+//const int   max_connection = 2; 
+IPAddress local_ip(192,168,0,50);
+IPAddress gateway(192,168,0,50);
+IPAddress subnet(255,255,255,0); 
 
 // Pin definition for the camera module
 #define CAMERA_MODEL_AI_THINKER
@@ -158,9 +164,10 @@ void setup() {
   Serial.begin(115200);
 
   // Open Wi-Fi Access Point
-  WiFi.hostname("BirthdayBooth");
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(local_ip, gateway, subnet);
   Serial.println("Opening Access Point...");
-  WiFi.softAP(ssid, password);
+  WiFi.softAP(ssid, password, channel); //WiFi.softAP(ssid, password, channel, hide_SSID, max_connection);
   IPAddress IP = WiFi.softAPIP();
   Serial.print("IP address for Access Point: ");
   Serial.println(IP);
