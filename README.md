@@ -1,1 +1,1 @@
-# photoBooth
+# birthdayBooth
