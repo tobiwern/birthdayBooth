@@ -120,9 +120,9 @@ void handle_OnCapture(){
 
 void captureAndSendPhoto(){
     Serial.println("Taking photo...");
-    Serial.println("Sending message for capturing to WebSocket client 1 ...");
-    webSocket.sendTXT(1,"capturing",strlen("capturing"));
-    Serial.println("Sent message for capturing to WebSocket client 1 .");
+    Serial.println("Sending message for capturing to all WebSocket clients ...");
+    webSocket.broadcastTXT("capturing",strlen("capturing"));
+    Serial.println("Sent message for capturing to all WebSocket clients .");
     camera_fb_t *fb = NULL;
     fb = esp_camera_fb_get();
     if (fb) {
