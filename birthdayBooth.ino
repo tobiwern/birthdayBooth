@@ -1,16 +1,12 @@
 #include <WiFi.h>
-//#include <ESPAsyncWebServer.h>
-//#include <ESPAsyncWiFiManager.h>
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include "esp_camera.h"
 #include "esp_timer.h"
-#include "soc/soc.h"           // Disable brownour problems
-#include "soc/rtc_cntl_reg.h"  // Disable brownour problems
+#include "soc/soc.h"           // Disable brownout problems
+#include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "driver/rtc_io.h"
 #include "credentials.h"
-
-//IPAddress local_IP(192, 168, 50, 50); //https://randomnerdtutorials.com/esp8266-nodemcu-static-fixed-ip-address-arduino/
 
 const char* ssid = "BirthdayBooth" ;//mySSID;
 const char* password = "BirthdayBooth"; //myPASSWORD;
@@ -161,23 +157,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 void setup() {
   Serial.begin(115200);
 
-  // Connect to Wi-Fi
+  // Open Wi-Fi Access Point
   WiFi.hostname("BirthdayBooth");
-//  WiFi.begin(ssid, password);
+  Serial.println("Opening Access Point...");
   WiFi.softAP(ssid, password);
   IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
+  Serial.print("IP address for Access Point: ");
   Serial.println(IP);
-
   WiFi.setSleep(false);
-  //Serial.print("Connecting to WiFi...");
-  //while (WiFi.status() != WL_CONNECTED) {
-  //  delay(1000);
-  //  Serial.print(".");
-  //}
-  //Serial.println(".");
-  //Serial.print("Connected to WiFi with IP ");
-  //Serial.println(WiFi.localIP());
 
 // Turn-off the 'brownout detector'
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
