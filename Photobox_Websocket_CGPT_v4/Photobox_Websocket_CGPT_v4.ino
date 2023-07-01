@@ -10,9 +10,11 @@
 #include "driver/rtc_io.h"
 #include "credentials.h"
 
+//IPAddress local_IP(192, 168, 50, 50); //https://randomnerdtutorials.com/esp8266-nodemcu-static-fixed-ip-address-arduino/
+
 // Change the following settings according to your network
-const char* ssid = mySSID;
-const char* password = myPASSWORD;
+const char* ssid = "BirthdayBooth" ;//mySSID;
+const char* password = "BirthdayBooth"; //myPASSWORD;
 
 // Pin definition for the camera module
 #define CAMERA_MODEL_AI_THINKER
@@ -160,14 +162,22 @@ void setup() {
   Serial.begin(115200);
 
   // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
+  WiFi.hostname("BirthdayBooth");
+//  WiFi.begin(ssid, password);
+  WiFi.softAP(ssid, password);
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+
   WiFi.setSleep(false);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.print("Connected to WiFi with IP ");
-  Serial.println(WiFi.localIP());
+  //Serial.print("Connecting to WiFi...");
+  //while (WiFi.status() != WL_CONNECTED) {
+  //  delay(1000);
+  //  Serial.print(".");
+  //}
+  //Serial.println(".");
+  //Serial.print("Connected to WiFi with IP ");
+  //Serial.println(WiFi.localIP());
 
 // Turn-off the 'brownout detector'
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
