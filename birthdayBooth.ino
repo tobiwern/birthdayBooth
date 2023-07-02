@@ -7,6 +7,8 @@
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "driver/rtc_io.h"
 #include "credentials.h"
+#include "webpage.h" 
+#include "leds.h"
 
 const char* ssid = "BirthdayBooth" ;//mySSID;
 const char* password = "BirthdayBooth"; //myPASSWORD;
@@ -37,75 +39,6 @@ IPAddress subnet(255,255,255,0);
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 #define LED_GPIO_NUM       4
-
-const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-  <title>ESP32-CAM Photo Viewer</title>
-</head>
-<body>
-  <h1>ESP32-CAM Photo Viewer</h1>
-  <button onclick="capturePhoto()">Capture Photo</button>
-  <div id="photoContainer"></div>
-
-  <script>
-    var socket;
-
-    // Function to connect to the WebSocket server
-    function connectWebSocket() {
-      socket = new WebSocket('ws://'+location.hostname+':81/');
-      socket.binaryType = 'arraybuffer';
-
-      // When the WebSocket connection is established
-      socket.onopen = function(event) {
-        console.log('Connected to WebSocket');
-      };
-
-      // When data is received from the WebSocket server
-      socket.onmessage = function(event) {
-        console.log("Message from WebSocket connection received.");                     
-        const contentType = event.data.constructor.name;
-        console.log('Received data type: ' + event.data.constructor.name);
-
-        if (contentType === 'Blob' || contentType === 'ArrayBuffer') {
-          console.log("Receiving image...");
-          var imgData = new Uint8Array(event.data);
-          var blob = new Blob([imgData], { type: 'image/jpeg' });
-          var imgUrl = URL.createObjectURL(blob);
-          var img = document.createElement('img');
-          img.src = imgUrl;
-          document.getElementById('photoContainer').replaceChildren(img);
-        }
-        else{
-          console.log('WebSocket message: ' + event.data);
-          console.log("Capture in progress...");          
-        }
-      };
-
-      // When the WebSocket connection is closed
-      socket.onclose = function(event) {
-        console.log('WebSocket connection closed');
-      };
-    }
-
-    // Function to capture a photo from the ESP32-CAM
-    function capturePhoto() {
-      console.log('Capturing photo...');
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send('C');
-      }
-      else{
-        console.log('WebSocket not connected.')
-      }
-    }
-
-    // Connect to the WebSocket server on page load
-    window.addEventListener('load', connectWebSocket);
-  </script>
-</body>
-</html>
-)rawliteral";
 
 //Create an instance of HTTP server
 WebServer server(80);      
@@ -164,10 +97,10 @@ void setup() {
   Serial.begin(115200);
 
   // Open Wi-Fi Access Point
-  WiFi.mode(WIFI_AP);
-  WiFi.softAPConfig(local_ip, gateway, subnet);
+//  WiFi.mode(WIFI_AP);
+//  WiFi.softAPConfig(local_ip, gateway, subnet);
   Serial.println("Opening Access Point...");
-  WiFi.softAP(ssid, password, channel); //WiFi.softAP(ssid, password, channel, hide_SSID, max_connection);
+  WiFi.softAP(ssid, password); //, channel); //WiFi.softAP(ssid, password, channel, hide_SSID, max_connection);
   IPAddress IP = WiFi.softAPIP();
   Serial.print("IP address for Access Point: ");
   Serial.println(IP);
@@ -236,9 +169,17 @@ void setup() {
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
   Serial.println("WebSocket server started");
+
+  // Setup LED RING
+  setupLeds();
 }
 
 void loop() {
   server.handleClient();
   webSocket.loop();
+  rainbowWithGlitter();
+  handleLeds();
 }
+
+//blink sequence - 3x long, 3xshort
+int blink_duration_short = 100; //ms
