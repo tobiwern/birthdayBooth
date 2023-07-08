@@ -7,82 +7,90 @@
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "driver/rtc_io.h"
 #include "credentials.h"
-#include "webpage.h" 
+#include "webpage.h"
 #include "leds.h"
 
-const char* ssid = "BirthdayBooth" ;//mySSID;
-const char* password = "BirthdayBooth"; //myPASSWORD;
+const char* ssid = "BirthdayBooth";      //mySSID;
+const char* password = "BirthdayBooth";  //myPASSWORD;
 String hostname = "birthday-booth";
 const int channel = 6;
-//const bool  hide_SSID = false; 
-//const int   max_connection = 2; 
-IPAddress local_ip(192,168,0,50);
-IPAddress gateway(192,168,0,50);
-IPAddress subnet(255,255,255,0); 
+//const bool  hide_SSID = false;
+//const int   max_connection = 2;
+IPAddress local_ip(192, 168, 0, 50);
+IPAddress gateway(192, 168, 0, 50);
+IPAddress subnet(255, 255, 255, 0);
 
 // Pin definition for the camera module
 #define CAMERA_MODEL_AI_THINKER
-#define PWDN_GPIO_NUM     32
-#define RESET_GPIO_NUM    -1
-#define XCLK_GPIO_NUM      0
-#define SIOD_GPIO_NUM     26
-#define SIOC_GPIO_NUM     27
-#define Y9_GPIO_NUM       35
-#define Y8_GPIO_NUM       34
-#define Y7_GPIO_NUM       39
-#define Y6_GPIO_NUM       36
-#define Y5_GPIO_NUM       21
-#define Y4_GPIO_NUM       19
-#define Y3_GPIO_NUM       18
-#define Y2_GPIO_NUM        5
-#define VSYNC_GPIO_NUM    25
-#define HREF_GPIO_NUM     23
-#define PCLK_GPIO_NUM     22
-#define LED_GPIO_NUM       4
+#define PWDN_GPIO_NUM 32
+#define RESET_GPIO_NUM -1
+#define XCLK_GPIO_NUM 0
+#define SIOD_GPIO_NUM 26
+#define SIOC_GPIO_NUM 27
+#define Y9_GPIO_NUM 35
+#define Y8_GPIO_NUM 34
+#define Y7_GPIO_NUM 39
+#define Y6_GPIO_NUM 36
+#define Y5_GPIO_NUM 21
+#define Y4_GPIO_NUM 19
+#define Y3_GPIO_NUM 18
+#define Y2_GPIO_NUM 5
+#define VSYNC_GPIO_NUM 25
+#define HREF_GPIO_NUM 23
+#define PCLK_GPIO_NUM 22
+#define LED_GPIO_NUM 4
+
+#define STATE_IDLE 0
+#define STATE_COUNTDOWN 1
+#define STATE_CAPTURE 2
+int STATE = 0;
+int STATE_PREVIOUS = -1;
+String stateTbl[] = { "STATE_IDLE", "STATE_COUNTDOWN", "STATE_CAPTURE" };
 
 //Create an instance of HTTP server
-WebServer server(80);      
+WebServer server(80);
 // Create an instance of the WebSocketsServer
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 void handle_OnConnect() {
   Serial.println("Delivering landing page...");
-  server.send(200, "text/html", index_html); 
+  server.send(200, "text/html", index_html);
 }
 
-void handle_OnCapture(){
+void handle_OnCapture() {
   Serial.println("Capture request received.");
-  server.send(200, "text/plain", "Capture request received successfully."); 
-  captureAndSendPhoto();
+  server.send(200, "text/plain", "Capture request received successfully.");
+  STATE = STATE_COUNTDOWN;
 }
 
-void captureAndSendPhoto(){
-    Serial.println("Taking photo...");
-    Serial.println("Sending message for capturing to all WebSocket clients ...");
-    webSocket.broadcastTXT("capturing",strlen("capturing"));
-    Serial.println("Sent message for capturing to all WebSocket clients .");
-    camera_fb_t *fb = NULL;
-    fb = esp_camera_fb_get();
-    if (fb) {
-      Serial.println("Buffer from camera received.");
-      Serial.println("Broadcasting image to WebSocket client 0 ...");
-      webSocket.sendBIN(0,fb->buf, fb->len);
-      Serial.println("Broadcasted image to WebSocket client 0 .");
-      esp_camera_fb_return(fb);
-    }
+void captureAndSendPhoto() {
+  Serial.println("Taking photo...");
+  Serial.println("Sending message for capturing to all WebSocket clients ...");
+  webSocket.broadcastTXT("capturing", strlen("capturing"));
+  Serial.println("Sent message for capturing to all WebSocket clients .");
+  camera_fb_t* fb = NULL;
+  fb = esp_camera_fb_get();
+  if (fb) {
+    Serial.println("Buffer from camera received.");
+    Serial.println("Broadcasting image to WebSocket client 0 ...");
+    //    webSocket.sendBIN(0, fb->buf, fb->len);
+    webSocket.broadcastBIN(fb->buf, fb->len);
+    Serial.println("Broadcasted image to WebSocket client 0 .");
+    esp_camera_fb_return(fb);
+  }
 }
 
 // Function to handle WebSocket events
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length) {
-  switch(type) {
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
+  switch (type) {
     // When a WebSocket connection is established
     case WStype_CONNECTED:
       Serial.printf("[%u] Connected!\n", num);
       break;
     // When data is received from a WebSocket connection
     case WStype_TEXT:
-    Serial.println("Call to Websocket received.");
-      if (payload[0] == 'C') { // Capture a photo
+      Serial.println("Call to Websocket received.");
+      if (payload[0] == 'C') {  // Capture a photo
         captureAndSendPhoto();
       }
       break;
@@ -97,16 +105,16 @@ void setup() {
   Serial.begin(115200);
 
   // Open Wi-Fi Access Point
-//  WiFi.mode(WIFI_AP);
-//  WiFi.softAPConfig(local_ip, gateway, subnet);
+  //  WiFi.mode(WIFI_AP);
+  //  WiFi.softAPConfig(local_ip, gateway, subnet);
   Serial.println("Opening Access Point...");
-  WiFi.softAP(ssid, password); //, channel); //WiFi.softAP(ssid, password, channel, hide_SSID, max_connection);
+  WiFi.softAP(ssid, password);  //, channel); //WiFi.softAP(ssid, password, channel, hide_SSID, max_connection);
   IPAddress IP = WiFi.softAPIP();
   Serial.print("IP address for Access Point: ");
   Serial.println(IP);
   WiFi.setSleep(false);
 
-// Turn-off the 'brownout detector'
+  // Turn-off the 'brownout detector'
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
   // Configure the camera
@@ -134,8 +142,8 @@ void setup() {
 
   if (psramFound()) {
     config.frame_size = FRAMESIZE_UXGA;
-    config.jpeg_quality = 12; //10
-    config.fb_count = 2; //2
+    config.jpeg_quality = 12;  //10
+    config.fb_count = 2;       //2
     config.grab_mode = CAMERA_GRAB_LATEST;
     Serial.println("PSRAM present -> Camera resolution is UXGA (1600 × 1200)");
   } else {
@@ -165,7 +173,7 @@ void setup() {
   Serial.println("Web Server started");
 
   // Start the WebSocket server
-  Serial.println("Starting WebSocket...");  
+  Serial.println("Starting WebSocket...");
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
   Serial.println("WebSocket server started");
@@ -177,9 +185,32 @@ void setup() {
 void loop() {
   server.handleClient();
   webSocket.loop();
-  rainbowWithGlitter();
-  handleLeds();
+  handleState();
 }
 
-//blink sequence - 3x long, 3xshort
-int blink_duration_short = 100; //ms
+void handleState() {
+  unsigned long millisNow = millis();
+  //  Serial.println("STATE = " + stateTbl[STATE] + ", STATE_PREVIOUS = " + stateTbl[STATE_PREVIOUS]);
+  if (STATE != STATE_PREVIOUS) { Serial.println("STATE = " + stateTbl[STATE]); }
+  switch (STATE) {
+    case STATE_IDLE:  //***********************************************************
+      ledsRainbowWithGlitter();
+      counter = 0;
+      break;
+    case STATE_COUNTDOWN:  //***********************************************************
+      Serial.println("STATE = " + stateTbl[STATE]);
+      ledsCountdown();
+      if (counter > NUM_LEDS) { STATE = STATE_CAPTURE; }
+      break;
+    case STATE_CAPTURE:
+      Serial.println("STATE = " + stateTbl[STATE]);
+      ledsGreen();
+      captureAndSendPhoto();
+      //      sinelon();
+      STATE = STATE_IDLE;
+      break;
+    default:
+      break;
+  }
+  STATE_PREVIOUS = STATE;
+}

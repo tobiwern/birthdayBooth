@@ -1,1 +1,1 @@
-# birthdayBooth
+# BirthdayBooth
