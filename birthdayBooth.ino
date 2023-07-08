@@ -13,7 +13,6 @@
 const char* ssid = mySSID;
 const char* password = myPASSWORD;
 String hostname = "birthday-booth";
-const int channel = 6;
 //const bool  hide_SSID = false;
 //const int   max_connection = 2;
 IPAddress local_IP(192, 168, 178, 50); // Set your Static IP address
