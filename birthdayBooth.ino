@@ -10,15 +10,17 @@
 #include "webpage.h"
 #include "leds.h"
 
-const char* ssid = "BirthdayBooth";      //mySSID;
-const char* password = "BirthdayBooth";  //myPASSWORD;
+const char* ssid = mySSID;
+const char* password = myPASSWORD;
 String hostname = "birthday-booth";
 const int channel = 6;
 //const bool  hide_SSID = false;
 //const int   max_connection = 2;
-IPAddress local_ip(192, 168, 0, 50);
-IPAddress gateway(192, 168, 0, 50);
-IPAddress subnet(255, 255, 255, 0);
+IPAddress local_IP(192, 168, 178, 50); // Set your Static IP address
+IPAddress gateway(192, 168, 178, 1);// Set your Gateway IP address
+IPAddress subnet(255, 255, 255, 0); //Set subnet mask according to IP range
+//IPAddress primaryDNS(8, 8, 8, 8);   //optional
+//IPAddress secondaryDNS(8, 8, 4, 4); //optional
 
 // Pin definition for the camera module
 #define CAMERA_MODEL_AI_THINKER
@@ -73,8 +75,7 @@ void captureAndSendPhoto() {
   if (fb) {
     Serial.println("Buffer from camera received.");
     Serial.println("Broadcasting image to WebSocket client 0 ...");
-    //    webSocket.sendBIN(0, fb->buf, fb->len);
-    webSocket.broadcastBIN(fb->buf, fb->len);
+    webSocket.sendBIN(0, fb->buf, fb->len);
     Serial.println("Broadcasted image to WebSocket client 0 .");
     esp_camera_fb_return(fb);
   }
@@ -104,15 +105,23 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 void setup() {
   Serial.begin(115200);
 
-  // Open Wi-Fi Access Point
-  //  WiFi.mode(WIFI_AP);
-  //  WiFi.softAPConfig(local_ip, gateway, subnet);
-  Serial.println("Opening Access Point...");
-  WiFi.softAP(ssid, password);  //, channel); //WiFi.softAP(ssid, password, channel, hide_SSID, max_connection);
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("IP address for Access Point: ");
-  Serial.println(IP);
-  WiFi.setSleep(false);
+  // Connect to Wi-Fi
+  WiFi.mode(WIFI_STA);
+  if (!WiFi.config(local_IP, gateway, subnet)) {
+    Serial.println("STA Failed to configure");
+  }
+  WiFi.hostname(hostname.c_str());
+   // Configures static IP address  
+  WiFi.begin(ssid, password);
+  WiFi.setSleep(false);  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.print("Connected to WiFi with IP ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Signal strength in RRSI: ");
+  Serial.println(WiFi.RSSI());
 
   // Turn-off the 'brownout detector'
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
