@@ -90,8 +90,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
     // When data is received from a WebSocket connection
     case WStype_TEXT:
       Serial.println("Call to Websocket received.");
-      if (payload[0] == 'C') {  // Capture a photo
-        captureAndSendPhoto();
+      if (payload[0] == 'C') {  // Capture a photo - set state to initiate countdown
+        STATE = STATE_COUNTDOWN;
       }
       break;
     // When a WebSocket connection is closed
